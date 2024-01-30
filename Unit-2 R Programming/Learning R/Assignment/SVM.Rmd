@@ -1,0 +1,73 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+install.packages("caret")
+# install.packages("randomForest")
+install.packages("ggplot2")
+
+
+```
+
+
+```{r}
+
+library(caret)
+library(randomForest)
+library(ggplot2)
+```
+
+```{r}
+# Load mtcars dataset
+data(mtcars)
+
+# Explore the dataset
+str(mtcars)
+```
+
+
+```{r}
+set.seed(123)
+indices <- createDataPartition(mtcars$mpg, p = 0.7, list = FALSE)
+train_data <- mtcars[indices, ]
+test_data <- mtcars[-indices, ]
+```
+
+```{r}
+rf_model <- randomForest(mpg ~ ., data = train_data, ntree = 100)
+```
+
+
+```{r}
+importance <- importance(rf_model)
+print(importance)
+```
+
+
+```{r}
+# Plot feature importance
+varImpPlot(rf_model, main = "Random Forest - Feature Importance")
+```
+
+
+
+```{r}
+# Predictions on the test set
+predictions <- predict(rf_model, test_data)
+```
+
+
+
+```{r}
+# Scatter plot of predicted vs actual mpg
+ggplot() +
+  geom_point(aes(x = test_data$mpg, y = predictions), color = "blue") +
+  geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
+  ggtitle("Scatter Plot of Actual vs Predicted mpg") +
+  xlab("Actual mpg") +
+  ylab("Predicted mpg") +
+  theme_minimal()
+```
+

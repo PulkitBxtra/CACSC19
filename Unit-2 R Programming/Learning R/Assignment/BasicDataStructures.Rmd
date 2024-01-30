@@ -1,0 +1,53 @@
+---
+title: "Basic Data Structures in R"
+output: html_document
+---
+
+# Vectors
+
+```{r}
+# Creating a numeric vector
+numeric_vector <- c(1, 2, 3, 4, 5)
+print(numeric_vector)
+
+# Creating a character vector
+character_vector <- c("apple", "orange", "banana")
+print(character_vector)
+```
+
+# Matrices
+
+```{r}
+# Creating a matrix
+matrix_data <- matrix(c(1, 2, 3, 4, 5, 6), nrow = 2, ncol = 3)
+print(matrix_data)
+```
+
+# Lists
+
+```{r}
+# Creating a list
+list_data <- list(numbers = c(1, 2, 3), fruits = c("apple", "orange", "banana"))
+print(list_data)
+```
+
+# Data Frames
+
+```{r}
+# Creating a data frame
+data_frame_data <- data.frame(
+  name = c("Alice", "Bob", "Charlie"),
+  age = c(25, 30, 22),
+  gender = c("Female", "Male", "Male")
+)
+print(data_frame_data)
+```
+
+# Factors
+
+```{r}
+# Creating a factor
+gender_factor <- factor(c("Male", "Female", "Male", "Female"))
+print(gender_factor)
+```
+
