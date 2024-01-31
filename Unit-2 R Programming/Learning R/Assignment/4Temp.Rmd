@@ -1,0 +1,193 @@
+---
+title: "Titanic Dataset Analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load necessary libraries
+```{r load-libraries, message=FALSE}
+install.packages(c("titanic", "rpart", "pROC", "ggplot2", "caret"))
+library(titanic)
+library(rpart)
+library(pROC)
+library(ggplot2)
+library(caret)
+```
+
+# Load Titanic dataset
+```{r load-dataset}
+data("titanic_train")
+titanic_data <- titanic_train
+```
+
+# Data Exploration and Visualization
+```{r data-exploration}
+summary(titanic_data)
+str(titanic_data)
+```
+
+# Data Preprocessing
+```{r data-preprocessing}
+# Remove unnecessary columns
+titanic_data <- titanic_data[, -c(1, 4, 9, 11)]
+
+# Convert categorical variables to factors
+titanic_data$Pclass <- as.factor(titanic_data$Pclass)
+titanic_data$Sex <- as.factor(titanic_data$Sex)
+titanic_data$Embarked <- as.factor(titanic_data$Embarked)
+
+# Impute missing values
+titanic_data$Age[is.na(titanic_data$Age)] <- median(titanic_data$Age, na.rm = TRUE)
+titanic_data$Embarked[is.na(titanic_data$Embarked)] <- "S"
+```
+
+# Split the data into training and testing sets
+```{r split-data}
+set.seed(123)
+splitIndex <- createDataPartition(titanic_data$Survived, p = 0.7, list = FALSE)
+train_data <- titanic_data[splitIndex, ]
+test_data <- titanic_data[-splitIndex, ]
+```
+
+
+# 1. Supervised Feature Selection using Decision Tree
+
+```{r}
+
+# Train a decision tree model
+tree_model <- rpart(Survived ~ ., data = train_data, method = "class")
+
+
+
+
+
+# Select top features based on importance
+top_features <- var_importance$Var1[1:5]
+train_data_selected <- train_data[, c("Survived", top_features)]
+test_data_selected <- test_data[, c("Survived", top_features)]
+
+
+```
+
+
+
+
+# 2. Unsupervised Feature Selection using PCA
+```{r unsupervised-feature-selection}
+# Standardize numerical features
+num_features <- c("Age", "SibSp", "Parch", "Fare")
+train_data[, num_features] <- scale(train_data[, num_features])
+test_data[, num_features] <- scale(test_data[, num_features])
+
+# Apply PCA
+pca_model <- prcomp(train_data[, num_features], center = TRUE, scale. = TRUE)
+
+# Plot cumulative variance explained
+cumulative_var <- cumsum(pca_model$sdev^2) / sum(pca_model$sdev^2)
+ggplot(data.frame(PC = 1:length(cumulative_var), Cumulative_Var = cumulative_var),
+       aes(x = PC, y = Cumulative_Var)) +
+  geom_line(color = "skyblue") +
+  labs(title = "Cumulative Variance Explained by Principal Components")
+```
+
+# Select top principal components
+```{r select-top-pca}
+num_components <- which(cumulative_var >= 0.95)[1]
+pca_train_data <- as.data.frame(predict(pca_model, newdata = train_data[, num_features])[, 1:num_components])
+pca_test_data <- as.data.frame(predict(pca_model, newdata = test_data[, num_features])[, 1:num_components])
+```
+
+# Combine selected features for modeling
+```{r combine-features}
+train_data_final <- cbind(train_data_selected, pca_train_data)
+test_data_final <- cbind(test_data_selected, pca_test_data)
+```
+
+Now you can use `train_data_final` and `test_data_final` for further modeling with the selected features. Knit this RMD file to generate a report with the results.
+
+
+```{r load-libraries, message=FALSE}
+install.packages("glmnet")
+```
+```{r}
+# ... (Previous code for feature selection)
+
+# Combine selected features for modeling
+train_data_final <- cbind(train_data_selected, pca_train_data)
+test_data_final <- cbind(test_data_selected, pca_test_data)
+
+# Now you can use train_data_final and test_data_final for further modeling with the selected features.
+
+# Model Training and Evaluation
+# Example: Logistic Regression
+library(glmnet)
+
+# Function to train and evaluate the model
+train_and_evaluate <- function(train_data, test_data) {
+  # Train the model
+  model <- glm(Survived ~ ., data = train_data, family = "binomial")
+  
+  # Make predictions on the test set
+  predictions <- predict(model, newdata = test_data, type = "response")
+  
+  # Convert probabilities to binary predictions (0 or 1)
+  predicted_labels <- ifelse(predictions > 0.5, 1, 0)
+  
+  # Evaluate the model
+  confusion_matrix <- confusionMatrix(table(predicted_labels, test_data$Survived))
+  accuracy <- confusion_matrix$overall["Accuracy"]
+  
+  return(list(model = model, accuracy = accuracy))
+}
+
+# Train and evaluate the model using selected features
+model_results <- train_and_evaluate(train_data_final, test_data_final)
+
+# Display model accuracy
+cat("Model Accuracy:", model_results$accuracy, "\n")
+
+# You can also access the trained model for further analysis if needed
+# trained_model <- model_results$model
+
+```
+
+
+
+```{r}
+# Model Training and Evaluation
+# Example: Logistic Regression
+library(glmnet)
+
+# Function to train and evaluate the model
+train_and_evaluate <- function(train_data, test_data) {
+  # Train the model
+  model <- glm(Survived ~ ., data = train_data, family = "binomial")
+  
+  # Make predictions on the test set
+  predictions <- predict(model, newdata = test_data, type = "response")
+  
+  # Convert probabilities to binary predictions (0 or 1)
+  predicted_labels <- ifelse(predictions > 0.5, 1, 0)
+  
+  # Evaluate the model
+  confusion_matrix <- confusionMatrix(table(predicted_labels, test_data$Survived))
+  accuracy <- confusion_matrix$overall["Accuracy"]
+  
+  return(list(model = model, accuracy = accuracy))
+}
+
+# Train and evaluate the model using selected features
+model_results <- train_and_evaluate(train_data_final, test_data_final)
+
+# Display model accuracy
+cat("Model Accuracy:", model_results$accuracy, "\n")
+
+# You can also access the trained model for further analysis if needed
+# trained_model <- model_results$model
+
+
+```
+

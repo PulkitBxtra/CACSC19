@@ -1,0 +1,80 @@
+---
+title: "PCA on Titanic Dataset"
+output: html_notebook
+---
+
+
+```{r}
+library(ggplot2)
+library(titanic)  
+
+
+data("titanic_train")
+titanic_data <- titanic_train
+
+head(titanic_data)
+
+## Calculates principal components with given formula on the data.
+calc_pc <- function(formula, data) {
+  print('Starting PCA')
+  prcomp(formula, data)
+}
+
+
+```
+
+
+``` {r}
+predict_pc <- function(prcompValues, newdata, ...) {
+  print('Predicting PC values')
+  predict(prcompValues, newdata, ...)
+}
+
+```
+
+
+
+```{r}
+show_pc <- function(data, formula) {
+  print('Starting show PC')
+  pca <- calc_pc(formula, data)
+
+  print(pca)
+  print(pca_plot(pca, 'PC1', 'PC2'))
+  print(pca_plot(pca, 'PC3', 'PC4'))
+  pca
+}
+
+pca_plot <- function(pca, byX = 'PC1', byY = 'PC2') {
+  loadings <- data.frame(pca$rotation, .names = row.names(pca$rotation))
+
+  theta <- seq(0, 2*pi, length.out = 100)
+  circle <- data.frame(x = cos(theta), y = sin(theta))
+
+  columnNameWithOffsetX <- paste(byX, '+ 0.2')
+  columnNameWithOffsetY <- paste(byY, '- 0.1')
+  p <- ggplot(circle, aes(x, y)) +
+      geom_path() +
+      geom_text(data=loadings,
+          mapping=aes_string(x = columnNameWithOffsetX, y = columnNameWithOffsetY,
+              label = '.names', color = '.names')) +
+      geom_jitter(data = loadings, mapping = aes_string(x = byX, y = byY, color = '.names'), shape = 2) +
+      coord_fixed(ratio = 1) +
+      labs(x = byX, y = byY)
+}
+
+
+formula <- ~ Age + Fare + Pclass + SibSp + Parch
+
+
+
+```
+
+
+# Call show_pc with the specified formula
+```{r}
+
+show_pc(titanic_data, formula)
+
+```
+
